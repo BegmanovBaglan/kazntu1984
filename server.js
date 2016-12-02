@@ -15,8 +15,18 @@ app.get('/', function(req, res){
 
 // GET /todos
 app.get('/students', function(req, res){
-	res.json(students);
+	var queryParams = req.query;
+	var filteredStudents = students;
+
+
+	if(queryParams.hasOwnProperty('n') && queryParams.n.length> 0){
+		filteredStudents = _.filter(filteredStudents, function (student){
+			return student.name.toLowerCase().indexOf(queryParams.n.toLowerCase()) > -1;
+		});
+	}
+	res.json(filteredStudents);
 });
+
 
 // GET /students/:id
 app.get('/students/:id', function(req, res){
@@ -67,6 +77,35 @@ app.delete('/student/:id', function(req,res){
 	}
 });
 
+app.put('/student/:id', function(req, res){
+	var studentId = parseInt(req.params.id, 10);
+	var matchedStudent = _.findWhere(student, {id: studentId});
+	var body = _.pick(req.body, 'name', 'course','group');
+	var validAttributes = {};
+
+	if(!matchedStudent){
+		return res.status(404).send();
+	}
+
+	if(body.hasOwnProperty('name') && _.isString(body.name) &&body.name.trim().length > 0){
+		validAttributes.name = body.name;
+	}else if(body.hasOwnProperty('name')){
+		return res.status(404).send();
+	}
+	if(body.hasOwnProperty('course') && _.isString(body.course) &&body.course.trim().length > 0){
+		validAttributes.course = body.course;
+	}else if(body.hasOwnProperty('course')){
+		return res.status(404).send();
+	}
+	if(body.hasOwnProperty('group') && _.isString(body.group) &&body.group.trim().length > 0){
+		validAttributes.group = body.group;
+	}else if(body.hasOwnProperty('group')){
+		return res.status(404).send();
+	}
+
+	matchedStudent = _.extend(matchedStudent, validAttributes);
+	res.json(matchedStudent);
+});
 app.listen(PORT, function(){
 	console.log('Express listening on port ' + PORT + '!');
 });
